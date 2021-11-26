@@ -1,72 +1,77 @@
 //This seems really hacky, but so far is the most reliable way i found to know when a page has changed;
 let url = window.location.href;
 
-['click', 'popstate', 'load'].forEach(evt =>
-    window.addEventListener(evt, function () {
-        requestAnimationFrame(() => {
-            if (url !== location.href) {
+document.addEventListener('odyseeVideoElementReady', (data) => {
 
-                //temporary work around to allow page elements and video to load
-                setTimeout(() => {
+    console.log('Video element loaded on ' + data.detail.videoName);
 
-                    console.log(`changed ${url}`);
-                    let urlLocation = window.location.href.substring(19, window.location.href.length);
+});
 
-                    if (urlLocation.startsWith('@')) {
-                        checkForVideoAndSetWatchTime();
-                    }
 
-                }, 5000);
+window.addEventListener('odyseePageChanged', function () {
+    console.log('pageChanged event handled');
 
+    let odyseePageName = window.location.href.substring(19, window.location.href.length);
+    if (odyseePageName.startsWith('@')) {
+
+        //temporary work around to allow page elements and video to load
+        setTimeout(() => {
+
+            console.log(`changed ${url}`);
+            let urlLocation = window.location.href.substring(19, window.location.href.length);
+
+            if (urlLocation.startsWith('@')) {
+                checkForVideoAndSetWatchTime();
             }
-            else {
-                setTimeout(() => {
 
-                    chrome.storage.sync.get('watched_urls', (data) => {
+        }, 5000);
 
-                    if(data.watched_urls == undefined)
-                    {
-                        return;
+    }
+    else {
+        setTimeout(() => {
+
+            chrome.storage.sync.get('watched_urls', (data) => {
+
+                if (data.watched_urls == undefined) {
+                    return;
+                }
+
+                //card claim-preview--tile
+                //.claim-tile__header a
+                //.claim-preview__file-property-overlay span
+                var visibleTitles = document.getElementsByClassName("card");
+
+                console.log("loaded video titles :" + visibleTitles.length);
+
+                for (const key in visibleTitles) {
+                    if (Object.hasOwnProperty.call(visibleTitles, key)) {
+                        const element = visibleTitles[key];
+
+                        var link = element.querySelector('.card a').href;
+
+                        data.watched_urls.pages.forEach(page => {
+
+                            if (page.url === link.substring(19, link.length)) {
+                                element.style.backgroundColor = 'red';
+
+                                var watchedTime = (page.time / 60).toFixed(2);
+
+                                var timeSpan = element.querySelector("[class$='_overlay-properties'] span")
+                                timeSpan.innerHTML = `${watchedTime}\\${timeSpan.innerHTML}`;
+                            }
+
+                        });
+
+
                     }
+                }
+            });
 
-                    //card claim-preview--tile
-                    //.claim-tile__header a
-                    //.claim-preview__file-property-overlay span
-                    var visibleTitles = document.getElementsByClassName("card");
+        }, 5000);
 
-                    console.log("loaded video titles :" + visibleTitles.length);
-
-                    for (const key in visibleTitles) {
-                        if (Object.hasOwnProperty.call(visibleTitles, key)) {
-                            const element = visibleTitles[key];
-
-                            var link = element.querySelector('.card a').href;
-
-                            data.watched_urls.pages.forEach(page => {
-
-                                if (page.url === link.substring(19, link.length)) {
-                                    element.style.backgroundColor = 'red';
-
-                                    var watchedTime = (page.time / 60).toFixed(2);
-
-                                    var timeSpan = element.querySelector("[class$='_overlay-properties'] span")
-                                    timeSpan.innerHTML = `${watchedTime}\\${timeSpan.innerHTML}`;
-                                }
-                    
-                            });
-                            
-                            
-                        }
-                    }
-                });
-
-                }, 5000);
-
-            }
-            url = location.href;
-        });
-    }, true)
-);
+    }
+    url = location.href;
+}, true)
 
 
 function checkForVideoAndSetWatchTime() {
@@ -188,4 +193,50 @@ function storePlayTime() {
         });
 
     });
+}
+
+setInterval(() => {
+
+    if (url !== document.location.href) {
+
+        let odyseePageName = window.location.href.substring(19, window.location.href.length);
+
+        window.dispatchEvent(new CustomEvent('odyseePageChanged', { detail: { pageName: odyseePageName } }));
+
+        console.log('odyseePageChanged');
+    }
+
+    url = document.location.href;
+
+}, 1000)
+
+const odyseeVideoReadyEvent = new CustomEvent('odyseeVideoLoaded');
+
+window.addEventListener('odyseePageChanged', (data) => {
+
+    if (data.detail.pageName.startsWith('@')) {
+        GetVideoElement(data.detail.pageName);
+    }
+
+    console.log("data from page change " + data.detail.pageName);
+})
+
+function GetVideoElement(videoName) {
+    var videoElement = document.querySelector('video');
+
+    if (videoElement == undefined) {
+
+        setTimeout(() => {
+            GetVideoElement(videoName);
+        }, 500);
+    }
+    else {
+        document.dispatchEvent(new CustomEvent('odyseeVideoElementReady',
+            {
+                detail: {
+                    'videoName': videoName,
+                    element: videoElement
+                }
+            }));
+    }
 }
