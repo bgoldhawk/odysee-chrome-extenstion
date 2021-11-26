@@ -46,12 +46,28 @@ window.addEventListener('odyseePageChanged', function (data) {
                             data.watched_urls.pages.forEach(page => {
 
                                 if (page.url === link.substring(19, link.length)) {
-                                    element.style.backgroundColor = 'red';
 
-                                    var watchedTime = displayTime(page.time.toFixed(0));
+                                    
+
+                                    var titleArea = element.querySelector("[class$='tile__header']");
 
                                     var timeSpan = element.querySelector("[class$='_overlay-properties'] span")
-                                    timeSpan.innerHTML = `${watchedTime}/${timeSpan.innerHTML}`;
+
+                                    
+
+                                    var watchedPercent = GetPercentageWatch(timeSpan, page.time.toFixed(0));
+
+
+                                    titleArea.innerHTML = '<div style="background-color:red;width:'+watchedPercent+'%;height:100%;position:absolute;"></div>' + titleArea.innerHTML;
+
+                                    
+                                    var watchedTime = displayTime(page.time.toFixed(0));
+                                    
+                                    if(timeSpan != undefined)
+                                    {
+                                        timeSpan.innerHTML = `${watchedTime}/${timeSpan.innerHTML}`;
+                                    }
+                                    
                                 }
 
                             });
@@ -66,6 +82,35 @@ window.addEventListener('odyseePageChanged', function (data) {
     url = location.href;
 }, true)
 
+
+function GetPercentageWatch(timeSpan, watchedTime)
+{
+    if(timeSpan == undefined)
+    {
+        return 100;
+    }
+
+    var timeParts = timeSpan.innerHTML.split(":");
+
+    var totalTimeInSecs;
+
+    if(timeParts.length > 2)
+    {
+        totalTimeInSecs = ((timeParts[0]*60)*60) + (timeParts[1]*60) + (timeParts[2]*1);
+    }
+    else
+    {
+        totalTimeInSecs = (timeParts[0]*60) + (timeParts[1]*1);
+    }
+
+    console.log("Total time in seconds: " + totalTimeInSecs);
+
+    var percent = Math.floor((watchedTime*1/totalTimeInSecs)*100);
+
+    console.log(`percent: ${percent}`);
+    return percent;
+     
+}
 
 function checkForVideoAndSetWatchTime(videoElement, videoName) {
 
@@ -116,11 +161,13 @@ function checkForVideoAndSetWatchTime(videoElement, videoName) {
 
             console.log(videoElement.currentTime);
             videoElement.currentTime = time;
-            videoElement.play();
+            
         }
         else {
             console.log("No watch time defined");
         }
+
+        videoElement.play();
 
         setInterval(function () { storePlayTime(videoElement, videoName) }, 10000);
 
