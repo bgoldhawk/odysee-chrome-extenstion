@@ -1,46 +1,3 @@
-/*
-window.addEventListener('load', function () {
-
-
-    console.log("page change");
-
-    setTimeout(() => {
-
-        let url = window.location.href.substring(19, window.location.href.length);
-
-        if (url.startsWith('@')) {
-            checkForVideoAndSetWatchTime();
-
-            //let url = window.location.href.substring(19, window.location.href.length);
-            //let video = document.querySelector('video');
-        }
-
-    }, 5000);
-
-});
-
-window.addEventListener('popstate', function (event) {
-    console.log("url changed");
-
-    setTimeout(() => {
-
-        let url = window.location.href.substring(19, window.location.href.length);
-
-        if (url.startsWith('@')) {
-            checkForVideoAndSetWatchTime();
-
-            //let url = window.location.href.substring(19, window.location.href.length);
-            //let video = document.querySelector('video');
-        }
-
-    }, 5000);
-});
-
-window.addEventListener('pushstate', function (event) {
-    console.log("url changed push");
-});
-
-*/
 //This seems really hacky, but so far is the most reliable way i found to know when a page has changed;
 let url = window.location.href;
 
@@ -52,23 +9,59 @@ let url = window.location.href;
                 //temporary work around to allow page elements and video to load
                 setTimeout(() => {
 
-                console.log(`changed ${url}`);
-                let urlLocation = window.location.href.substring(19, window.location.href.length);
+                    console.log(`changed ${url}`);
+                    let urlLocation = window.location.href.substring(19, window.location.href.length);
 
-                if (urlLocation.startsWith('@')) {
-                    checkForVideoAndSetWatchTime();
-                }
+                    if (urlLocation.startsWith('@')) {
+                        checkForVideoAndSetWatchTime();
+                    }
 
-            }, 5000);
+                }, 5000);
+
+            }
+            else {
+                setTimeout(() => {
+
+                    chrome.storage.sync.get('watched_urls', (data) => {
+
+                    if(data.watched_urls == undefined)
+                    {
+                        return;
+                    }
+
+                    //card claim-preview--tile
+                    //.claim-tile__header a
+                    //.claim-preview__file-property-overlay span
+                    var visibleTitles = document.getElementsByClassName("card");
+
+                    console.log("loaded video titles :" + visibleTitles.length);
+
+                    for (const key in visibleTitles) {
+                        if (Object.hasOwnProperty.call(visibleTitles, key)) {
+                            const element = visibleTitles[key];
+
+                            var link = element.querySelector('.card a').href;
+
+                            data.watched_urls.pages.forEach(page => {
+
+                                if (page.url === link.substring(19, link.length)) {
+                                    element.style.backgroundColor = 'red';
+                                }
+                    
+                            });
+                            
+                            
+                        }
+                    }
+                });
+
+                }, 5000);
 
             }
             url = location.href;
         });
     }, true)
 );
-
-
-
 
 
 function checkForVideoAndSetWatchTime() {
