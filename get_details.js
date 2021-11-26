@@ -1,7 +1,7 @@
 //This seems really hacky, but so far is the most reliable way i found to know when a page has changed;
 let url = window.location.href;
 
-['click', 'popstate', 'onload'].forEach(evt =>
+['click', 'popstate', 'load'].forEach(evt =>
     window.addEventListener(evt, function () {
         requestAnimationFrame(() => {
             if (url !== location.href) {
