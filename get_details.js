@@ -13,14 +13,13 @@ document.addEventListener('odyseeVideoElementReady', (data) => {
 
 });
 
-
-window.addEventListener('odyseePageChanged', function () {
+window.addEventListener('odyseePageChanged', function (data) {
     console.log('pageChanged event handled');
 
     let odyseePageName = window.location.href.substring(19, window.location.href.length);
-    if (odyseePageName.startsWith('@')) {
-    }
-    else {
+    if (!odyseePageName.startsWith('@'))
+    {
+
         setTimeout(() => {
 
             chrome.storage.sync.get('watched_urls', (data) => {
@@ -60,7 +59,7 @@ window.addEventListener('odyseePageChanged', function () {
                 }
             });
 
-        }, 5000);
+        }, 2000);
 
     }
     url = location.href;
