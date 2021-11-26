@@ -1,9 +1,15 @@
 //This seems really hacky, but so far is the most reliable way i found to know when a page has changed;
-let url = window.location.href;
+let url;
 
 document.addEventListener('odyseeVideoElementReady', (data) => {
 
     console.log('Video element loaded on ' + data.detail.videoName);
+    console.log(data.detail.element);
+
+    var videoElement = data.detail.element;
+    var videoName = data.detail.videoName;
+
+    checkForVideoAndSetWatchTime(videoElement, videoName);
 
 });
 
@@ -13,19 +19,6 @@ window.addEventListener('odyseePageChanged', function () {
 
     let odyseePageName = window.location.href.substring(19, window.location.href.length);
     if (odyseePageName.startsWith('@')) {
-
-        //temporary work around to allow page elements and video to load
-        setTimeout(() => {
-
-            console.log(`changed ${url}`);
-            let urlLocation = window.location.href.substring(19, window.location.href.length);
-
-            if (urlLocation.startsWith('@')) {
-                checkForVideoAndSetWatchTime();
-            }
-
-        }, 5000);
-
     }
     else {
         setTimeout(() => {
@@ -74,67 +67,65 @@ window.addEventListener('odyseePageChanged', function () {
 }, true)
 
 
-function checkForVideoAndSetWatchTime() {
-    var video = document.querySelector('video');
-    var url = window.location.href.substring(19, window.location.href.length);
+function checkForVideoAndSetWatchTime(videoElement, videoName) {
 
-    if (video == undefined) {
 
-        console.log("video not loaded");
-        setTimeout(() => {
-            checkForVideoAndSetWatchTime();
-        }, 1000);
+    if (videoElement.readyState < 4) {
+
+        console.log("Waiting for video to be ready, current state is " + videoName.readyState);
+
+        setTimeout(() => {checkForVideoAndSetWatchTime(videoElement, videoName)}, 1000);
+        return;
     }
-    else {
-        video.pause();
-        console.log("vidoe loaded");
-
-        console.log("Getting watch time for " + url);
-        chrome.storage.sync.get("watched_urls", (data) => {
 
 
-            if (data == undefined) {
-                console.log("No Data loaded");
-                return;
-            }
+    chrome.storage.sync.get("watched_urls", (data) => {
 
-            if (data.watched_urls != undefined) {
-                console.log("Retrieveing Existing User Data");
+        videoElement.pause();
+
+        console.log("Getting watch time for " + videoName);
 
 
-                var time;
+        if (data == undefined) {
+            console.log("No Data loaded");
+            return;
+        }
 
-                data.watched_urls.pages.forEach(page => {
-
-                    if (page.url === url) {
-                        time = page.time;
-                    }
-
-                });
-
-                let video = document.querySelector('video');
-
-                console.log("retrieved watch time: " + time);
-            }
-
-            if (time != undefined) {
-                console.log("going to: " + time);
+        if (data.watched_urls != undefined) {
+            console.log("Retrieveing Existing User Data");
 
 
-                console.log(video.currentTime);
-                video.currentTime = time;
-                video.play();
-            }
-            else {
-                console.log("No watch time defined");
-            }
+            var time;
 
-            setInterval(function () { storePlayTime(video, url) }, 10000);
+            data.watched_urls.pages.forEach(page => {
+
+                if (page.url === videoName) {
+                    time = page.time;
+                }
+
+            });
+
+            let video = document.querySelector('video');
+
+            console.log("retrieved watch time: " + time);
+        }
+
+        if (time != undefined) {
+            console.log("going to: " + time);
 
 
-        });
+            console.log(videoElement.currentTime);
+            videoElement.currentTime = time;
+            videoElement.play();
+        }
+        else {
+            console.log("No watch time defined");
+        }
 
-    }
+        setInterval(function () { storePlayTime(videoElement, videoName) }, 10000);
+
+
+    });
 }
 
 
@@ -197,7 +188,7 @@ function storePlayTime() {
 
 setInterval(() => {
 
-    if (url !== document.location.href) {
+    if (url !== document.location.href || url == undefined) {
 
         let odyseePageName = window.location.href.substring(19, window.location.href.length);
 
@@ -224,6 +215,8 @@ window.addEventListener('odyseePageChanged', (data) => {
 function GetVideoElement(videoName) {
     var videoElement = document.querySelector('video');
 
+    console.log("Attempting to get video element " + videoElement);
+
     if (videoElement == undefined) {
 
         setTimeout(() => {
@@ -231,6 +224,9 @@ function GetVideoElement(videoName) {
         }, 500);
     }
     else {
+
+        console.log("Event video element loaded: " + videoElement);
+
         document.dispatchEvent(new CustomEvent('odyseeVideoElementReady',
             {
                 detail: {
