@@ -17,8 +17,7 @@ window.addEventListener('odyseePageChanged', function (data) {
     console.log('pageChanged event handled');
 
     let odyseePageName = window.location.href.substring(19, window.location.href.length);
-    if (!odyseePageName.startsWith('@'))
-    {
+    if (!odyseePageName.startsWith('@')) {
 
         setTimeout(() => {
 
@@ -27,10 +26,7 @@ window.addEventListener('odyseePageChanged', function (data) {
                 if (data.watched_urls == undefined) {
                     return;
                 }
-
-                //card claim-preview--tile
-                //.claim-tile__header a
-                //.claim-preview__file-property-overlay span
+                
                 var visibleTitles = document.getElementsByClassName("card");
 
                 console.log("loaded video titles :" + visibleTitles.length);
@@ -39,22 +35,27 @@ window.addEventListener('odyseePageChanged', function (data) {
                     if (Object.hasOwnProperty.call(visibleTitles, key)) {
                         const element = visibleTitles[key];
 
-                        var link = element.querySelector('.card a').href;
+                        var cardATag = element.querySelector('.card a');
 
-                        data.watched_urls.pages.forEach(page => {
-
-                            if (page.url === link.substring(19, link.length)) {
-                                element.style.backgroundColor = 'red';
-
-                                var watchedTime = (page.time / 60).toFixed(2);
-
-                                var timeSpan = element.querySelector("[class$='_overlay-properties'] span")
-                                timeSpan.innerHTML = `${watchedTime}\\${timeSpan.innerHTML}`;
-                            }
-
-                        });
+                        if (cardATag != undefined) {
 
 
+
+                            var link = cardATag.href;
+
+                            data.watched_urls.pages.forEach(page => {
+
+                                if (page.url === link.substring(19, link.length)) {
+                                    element.style.backgroundColor = 'red';
+
+                                    var watchedTime = (page.time / 60).toFixed(2);
+
+                                    var timeSpan = element.querySelector("[class$='_overlay-properties'] span")
+                                    timeSpan.innerHTML = `${watchedTime}\\${timeSpan.innerHTML}`;
+                                }
+
+                            });
+                        }
                     }
                 }
             });
@@ -73,7 +74,7 @@ function checkForVideoAndSetWatchTime(videoElement, videoName) {
 
         console.log("Waiting for video to be ready, current state is " + videoName.readyState);
 
-        setTimeout(() => {checkForVideoAndSetWatchTime(videoElement, videoName)}, 1000);
+        setTimeout(() => { checkForVideoAndSetWatchTime(videoElement, videoName) }, 1000);
         return;
     }
 
