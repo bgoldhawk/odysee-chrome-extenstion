@@ -1,6 +1,6 @@
 {
-    "name": "Getting Started Example",
-    "description" : "Build an Extention!",
+    "name": "Odysee Chrome Extenstion",
+    "description" : "Allows video history to be saved via chrome storage, and playback from where you left off, along with other missing features for odysee",
     "version" : "1.0",
     "manifest_version" : 3,
     "background" : {

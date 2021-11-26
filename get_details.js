@@ -49,6 +49,9 @@ let url = window.location.href;
         requestAnimationFrame(() => {
             if (url !== location.href) {
 
+                //temporary work around to allow page elements and video to load
+                setTimeout(() => {
+
                 console.log(`changed ${url}`);
                 let urlLocation = window.location.href.substring(19, window.location.href.length);
 
@@ -56,6 +59,7 @@ let url = window.location.href;
                     checkForVideoAndSetWatchTime();
                 }
 
+            }, 5000);
 
             }
             url = location.href;
