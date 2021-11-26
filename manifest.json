@@ -1,0 +1,16 @@
+{
+    "name": "Getting Started Example",
+    "description" : "Build an Extention!",
+    "version" : "1.0",
+    "manifest_version" : 3,
+    "background" : {
+        "service_worker" : "background.js"
+    },
+    "permissions":["storage", "activeTab", "scripting"],
+    "content_scripts": [
+        {
+            "matches":["https://odysee.com/*"],
+            "js":["get_details.js"]
+        }
+    ]
+}
