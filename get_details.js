@@ -1,7 +1,7 @@
 //This seems really hacky, but so far is the most reliable way i found to know when a page has changed;
 let url = window.location.href;
 
-['click', 'popstate', 'load'].forEach(evt =>
+['click', 'popstate', 'onload'].forEach(evt =>
     window.addEventListener(evt, function () {
         requestAnimationFrame(() => {
             if (url !== location.href) {
@@ -46,6 +46,11 @@ let url = window.location.href;
 
                                 if (page.url === link.substring(19, link.length)) {
                                     element.style.backgroundColor = 'red';
+
+                                    var watchedTime = (page.time / 60).toFixed(2);
+
+                                    var timeSpan = element.querySelector("[class$='_overlay-properties'] span")
+                                    timeSpan.innerHTML = `${watchedTime}\\${timeSpan.innerHTML}`;
                                 }
                     
                             });
