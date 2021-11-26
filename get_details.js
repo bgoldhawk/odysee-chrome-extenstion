@@ -48,10 +48,10 @@ window.addEventListener('odyseePageChanged', function (data) {
                                 if (page.url === link.substring(19, link.length)) {
                                     element.style.backgroundColor = 'red';
 
-                                    var watchedTime = (page.time / 60).toFixed(2);
+                                    var watchedTime = displayTime(page.time.toFixed(0));
 
                                     var timeSpan = element.querySelector("[class$='_overlay-properties'] span")
-                                    timeSpan.innerHTML = `${watchedTime}\\${timeSpan.innerHTML}`;
+                                    timeSpan.innerHTML = `${watchedTime}/${timeSpan.innerHTML}`;
                                 }
 
                             });
@@ -236,3 +236,11 @@ function GetVideoElement(videoName) {
             }));
     }
 }
+
+function displayTime (seconds) {
+    const format = val => `0${Math.floor(val)}`.slice(-2)
+    const hours = seconds / 3600
+    const minutes = (seconds % 3600) / 60
+  
+    return [hours, minutes, seconds % 60].map(format).join(':')
+  }
