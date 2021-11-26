@@ -1,3 +1,4 @@
+/*
 window.addEventListener('load', function () {
 
 
@@ -39,6 +40,32 @@ window.addEventListener('pushstate', function (event) {
     console.log("url changed push");
 });
 
+*/
+//This seems really hacky, but so far is the most reliable way i found to know when a page has changed;
+let url = window.location.href;
+
+['click', 'popstate', 'load'].forEach(evt =>
+    window.addEventListener(evt, function () {
+        requestAnimationFrame(() => {
+            if (url !== location.href) {
+
+                console.log(`changed ${url}`);
+                let urlLocation = window.location.href.substring(19, window.location.href.length);
+
+                if (urlLocation.startsWith('@')) {
+                    checkForVideoAndSetWatchTime();
+                }
+
+
+            }
+            url = location.href;
+        });
+    }, true)
+);
+
+
+
+
 
 function checkForVideoAndSetWatchTime() {
     var video = document.querySelector('video');
@@ -55,32 +82,38 @@ function checkForVideoAndSetWatchTime() {
         video.pause();
         console.log("vidoe loaded");
 
-        console.log("Getting watch time for " + name);
+        console.log("Getting watch time for " + url);
         chrome.storage.sync.get("watched_urls", (data) => {
 
 
             if (data == undefined) {
+                console.log("No Data loaded");
                 return;
             }
 
-            var time;
+            if (data.watched_urls != undefined) {
+                console.log("Retrieveing Existing User Data");
 
-            data.watched_urls.pages.forEach(page => {
 
-                if (page.url === name) {
-                    time = page.time;
-                }
+                var time;
 
-            });
+                data.watched_urls.pages.forEach(page => {
 
-            let video = document.querySelector('video');
+                    if (page.url === url) {
+                        time = page.time;
+                    }
 
-            console.log("retrieved watch time: " + time);
+                });
+
+                let video = document.querySelector('video');
+
+                console.log("retrieved watch time: " + time);
+            }
 
             if (time != undefined) {
                 console.log("going to: " + time);
 
-                
+
                 console.log(video.currentTime);
                 video.currentTime = time;
                 video.play();
@@ -107,8 +140,7 @@ function storePlayTime() {
 
     chrome.storage.sync.get('watched_urls', (data) => {
 
-        if(media == undefined || media.currentTime < 30)
-        {
+        if (media == undefined || media.currentTime < 30) {
             return;
         }
 
