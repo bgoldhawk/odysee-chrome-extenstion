@@ -78,5 +78,21 @@ namespace API.Controllers
             return Ok(user.WatchList);
         }
 
+        [HttpGet("GetAllWatched/{userId}/{videoTitle}")]
+        public async Task<IActionResult> GetAllWatchedAsync(Guid userId, string videoTitle)
+        {
+            var user = await _userService.GetByIdAsync(userId);
+
+            if(user == null)
+                return NotFound($"Unable to find user id {userId}");
+
+            var video = user.WatchList.FirstOrDefault(v => v.VideoTitle.ToLower().Equals(videoTitle.ToLower()));
+
+            if(video == null)
+                return NotFound("$Video not in watch list");
+
+            return Ok(video);
+        }
+
     }
 }
