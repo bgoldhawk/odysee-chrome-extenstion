@@ -4,7 +4,8 @@ services:
     api:
       image: mcr.microsoft.com/vscode/devcontainers/dotnetcore:0-5.0
       environment:
-       - ASPNETCORE_ENVIRONMENT=Development
+       ASPNETCORE_ENVIRONMENT: Development
+       ConnectionStrings_default: mongodb://root:developmenT!@mongo:27017/
       depends_on:
         - mongo
     mongo:

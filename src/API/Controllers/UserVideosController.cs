@@ -9,6 +9,8 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Linq;
 using MongoDB.Bson;
+using API.Data;
+using API.Data.Services;
 
 namespace API.Controllers
 {
@@ -16,58 +18,65 @@ namespace API.Controllers
     [Route("[controller]")]
     public class UserVideoController : ControllerBase
     {
-        private IConfiguration _configuration;
-        private MongoClient mongoDb;
+        private IUserService _userService;
 
-        public UserVideoController(IConfiguration configuration)
+        public UserVideoController(IUserService userService)
         {
-            _configuration = configuration;
-            mongoDb = new MongoClient("mongodb://root:developmenT!@mongo:27017/");
-
+            _userService = userService;
         }
 
-        
 
         [HttpPost("SyncNewTime")]
         public async Task<IActionResult> SyncNewTimeAsync(SyncedVideoViewModel syncedVideoViewModel)
         {
-            var db = mongoDb.GetDatabase("OdyseeUsersWatchedList");
+            if (ModelState.IsValid)
+            {
+                User user = null;
 
-            var users = db.GetCollection<User>("Users");
+                if (syncedVideoViewModel.UserId.HasValue)
+                {
+                    user = await _userService.GetByIdAsync(syncedVideoViewModel.UserId.Value);
 
-            User user =  null;
-            
-            if(syncedVideoViewModel.UserId.HasValue) 
-               user = (await users.FindAsync(u => u.Id.Equals(syncedVideoViewModel.UserId.Value))).FirstOrDefault();
+                    if(user == null)
+                        return NotFound($"Unable to find user id {syncedVideoViewModel.UserId.Value}");
+                }
+                    
 
+                if (user == null)
+                {
+                    user = new User();
+                }
+
+                var watched_video = user.WatchList.FirstOrDefault(v => v.VideoTitle.ToLower().Equals(syncedVideoViewModel.VideoTitle.ToLower()));
+
+                if (watched_video == null)
+                {
+                    watched_video = new Videos();
+                    watched_video.VideoTitle = syncedVideoViewModel.VideoTitle.ToLower();
+                    user.WatchList.Add(watched_video);
+                }
+
+                watched_video.WatchTime = syncedVideoViewModel.WatchTime;
+                watched_video.LastModified = DateTime.UtcNow;
+
+                await _userService.UpsertAsync(user);
+
+                return Ok(user.Id);
+            }
+
+            return BadRequest(ModelState);
+        }
+
+        [HttpGet("GetAllWatched/{userId}")]
+        public async Task<IActionResult> GetAllWatchedAsync(Guid userId)
+        {
+            var user = await _userService.GetByIdAsync(userId);
 
             if(user == null)
-            {
-                user = new User();
+                return NotFound($"Unable to find user id {userId}");
 
-                await users.InsertOneAsync(user);
-                    
-            }
-
-            var watched_video = user.WatchList.FirstOrDefault(v => v.VideoTitle.ToLower().Equals(syncedVideoViewModel.VideoTitle.ToLower()));
-
-            if(watched_video == null)
-            {
-                watched_video = new Videos();
-                watched_video.VideoTitle = syncedVideoViewModel.VideoTitle.ToLower();
-                user.WatchList.Add(watched_video);
-            }
-            
-            watched_video.WatchTime = syncedVideoViewModel.WatchTime;
-            watched_video.LastModified = DateTime.UtcNow;
-
-            user.LastModifed = DateTime.UtcNow;
-
-            users.ReplaceOne<User>(u => u.Id.Equals(user.Id), user, new ReplaceOptions{IsUpsert = true});
-
-            return Ok(user.Id);
-
+            return Ok(user.WatchList);
         }
-        
+
     }
 }

@@ -9,7 +9,7 @@ namespace API.Data.Entities
     {
         public User()
         {
-            Id = new Guid();
+            Id = Guid.NewGuid();
             WatchList = new List<Videos>();
             DateCreated = DateTime.UtcNow;
         }
