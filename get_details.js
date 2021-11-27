@@ -58,7 +58,7 @@ window.addEventListener('odyseePageChanged', function (data) {
                                     var watchedPercent = GetPercentageWatch(timeSpan, page.time.toFixed(0));
 
 
-                                    titleArea.innerHTML = '<div style="background-color:red;width:'+watchedPercent+'%;height:100%;position:absolute;"></div>' + titleArea.innerHTML;
+                                    titleArea.innerHTML = '<div style="background-color:#ba6562;width:'+watchedPercent+'%;height:100%;position:absolute;"></div>' + titleArea.innerHTML;
 
                                     
                                     var watchedTime = displayTime(page.time.toFixed(0));
