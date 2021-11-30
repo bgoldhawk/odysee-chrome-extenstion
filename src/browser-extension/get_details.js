@@ -1,7 +1,9 @@
+//import ApiService from './ApiService'
+
 //This seems really hacky, but so far is the most reliable way i found to know when a page has changed;
 let url;
 
-document.addEventListener('odyseeVideoElementReady', (data) => {
+document.addEventListener('odyseeVideoElementReady', async (data) => {
 
     console.log('Video element loaded on ' + data.detail.videoName);
     console.log(data.detail.element);
@@ -9,7 +11,58 @@ document.addEventListener('odyseeVideoElementReady', (data) => {
     var videoElement = data.detail.element;
     var videoName = data.detail.videoName;
 
-    checkForVideoAndSetWatchTime(videoElement, videoName);
+    //checkForVideoAndSetWatchTime(videoElement, videoName);
+
+    //var apiService = new APIService("http://localhost:5000");
+
+    //apiService.setNewSyncTime(null, "This is a test from extension");
+
+    data = {
+        userId: null,
+        videoTitle: "super test",
+        watchtime: 0
+    };
+
+   /* let response = await fetch("https://http://159.223.36.212/UserVideo/SyncNewTime", {
+        method: "POST",
+        mode: 'cors',
+        headers: {
+            'Accept': 'application/json, application/xml, text/plain, text/html, *.*',
+            "Access-Control-Allow-Origin": "*",
+            'Content-Type': "application/json"
+        },
+        body: data
+
+    })
+    .then(response => {
+        console.log(response);
+    })
+    .catch(error => console.log(error));*/
+
+    /*if (response.ok) { // if HTTP-status is 200-299
+        // get the response body (the method explained below)
+        let json = await response.json();
+      } else {
+        alert("HTTP-Error: " + response.status);
+      }*/
+
+    fetch('https://myextension.goldhawk.me/UserVideo/GetAllWatched/65c1bbf4-51f2-4648-9bee-04c84c27b21b', {
+        headers:{
+            "Access-Control-Allow-Origin":"*",
+            'Content-Type': 'application/json',
+            "accept": "*/*"
+        }
+    })
+    .then(response => response.json())
+    .then(data => console.log(data));
+
+    if (response.ok) { // if HTTP-status is 200-299
+        // get the response body (the method explained below)
+        let json = await response.json();
+      } else {
+        alert("HTTP-Error: " + response.status);
+      }
+    
 
 });
 
@@ -26,7 +79,7 @@ window.addEventListener('odyseePageChanged', function (data) {
                 if (data.watched_urls == undefined) {
                     return;
                 }
-                
+
                 var visibleTitles = document.getElementsByClassName("card");
 
                 console.log("loaded video titles :" + visibleTitles.length);
@@ -47,27 +100,26 @@ window.addEventListener('odyseePageChanged', function (data) {
 
                                 if (page.url === link.substring(19, link.length)) {
 
-                                    
+
 
                                     var titleArea = element.querySelector("[class$='tile__header']");
 
                                     var timeSpan = element.querySelector("[class$='_overlay-properties'] span")
 
-                                    
+
 
                                     var watchedPercent = GetPercentageWatch(timeSpan, page.time.toFixed(0));
 
 
-                                    titleArea.innerHTML = '<div style="background-color:#ba6562;width:'+watchedPercent+'%;height:100%;position:absolute;"></div>' + titleArea.innerHTML;
+                                    titleArea.innerHTML = '<div style="background-color:#ba6562;width:' + watchedPercent + '%;height:100%;position:absolute;"></div>' + titleArea.innerHTML;
 
-                                    
+
                                     var watchedTime = displayTime(page.time.toFixed(0));
-                                    
-                                    if(timeSpan != undefined)
-                                    {
+
+                                    if (timeSpan != undefined) {
                                         timeSpan.innerHTML = `${watchedTime}/${timeSpan.innerHTML}`;
                                     }
-                                    
+
                                 }
 
                             });
@@ -83,10 +135,8 @@ window.addEventListener('odyseePageChanged', function (data) {
 }, true)
 
 
-function GetPercentageWatch(timeSpan, watchedTime)
-{
-    if(timeSpan == undefined)
-    {
+function GetPercentageWatch(timeSpan, watchedTime) {
+    if (timeSpan == undefined) {
         return 100;
     }
 
@@ -94,22 +144,20 @@ function GetPercentageWatch(timeSpan, watchedTime)
 
     var totalTimeInSecs;
 
-    if(timeParts.length > 2)
-    {
-        totalTimeInSecs = ((timeParts[0]*60)*60) + (timeParts[1]*60) + (timeParts[2]*1);
+    if (timeParts.length > 2) {
+        totalTimeInSecs = ((timeParts[0] * 60) * 60) + (timeParts[1] * 60) + (timeParts[2] * 1);
     }
-    else
-    {
-        totalTimeInSecs = (timeParts[0]*60) + (timeParts[1]*1);
+    else {
+        totalTimeInSecs = (timeParts[0] * 60) + (timeParts[1] * 1);
     }
 
     console.log("Total time in seconds: " + totalTimeInSecs);
 
-    var percent = Math.floor((watchedTime*1/totalTimeInSecs)*100);
+    var percent = Math.floor((watchedTime * 1 / totalTimeInSecs) * 100);
 
     console.log(`percent: ${percent}`);
     return percent;
-     
+
 }
 
 function checkForVideoAndSetWatchTime(videoElement, videoName) {
@@ -161,7 +209,7 @@ function checkForVideoAndSetWatchTime(videoElement, videoName) {
 
             console.log(videoElement.currentTime);
             videoElement.currentTime = time;
-            
+
         }
         else {
             console.log("No watch time defined");
@@ -284,10 +332,34 @@ function GetVideoElement(videoName) {
     }
 }
 
-function displayTime (seconds) {
+function displayTime(seconds) {
     const format = val => `0${Math.floor(val)}`.slice(-2)
     const hours = seconds / 3600
     const minutes = (seconds % 3600) / 60
-  
+
     return [hours, minutes, seconds % 60].map(format).join(':')
-  }
+}
+
+
+class APIService {
+    #baseUrl;
+    constructor(serverUrl) {
+        this.#baseUrl = serverUrl;
+    }
+
+    async *setNewSyncTime(userId, movieTitle) {
+        params = {
+            userId,
+            movieTitle
+        };
+
+        await request(this.baseUrl + "/UserVideo/SyncNewTime", params, "POST")
+            .then((response) => {
+
+                return response.text();
+            })
+
+    }
+
+
+}

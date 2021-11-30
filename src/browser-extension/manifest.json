@@ -32,6 +32,7 @@
                 "https://odysee.com/*"
             ],
             "js": [
+                "ApiService.js",
                 "get_details.js"
             ]
         }
