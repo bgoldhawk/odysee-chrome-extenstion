@@ -9,7 +9,7 @@ document.addEventListener('odyseeVideoElementReady', async (data) => {
     console.log(data.detail.element);
 
     var videoElement = data.detail.element;
-    var videoName = data.detail.videoName;
+    var videoName = data.detail.videoName.toLowerCase();
 
     checkForVideoAndSetWatchTime(videoElement, videoName);
 
@@ -27,7 +27,7 @@ document.addEventListener('odyseeVideoElementReady', async (data) => {
 window.addEventListener('odyseePageChanged', function (data) {
     console.log('pageChanged event handled');
 
-    let odyseePageName = window.location.href.substring(19, window.location.href.length);
+    let odyseePageName = window.location.href.substring(19, window.location.href.length).toLowerCase();
     if (!odyseePageName.startsWith('@')) {
 
         setTimeout(() => {
@@ -66,7 +66,9 @@ window.addEventListener('odyseePageChanged', function (data) {
 
                                         data.forEach(page => {
 
-                                            if (page.videoTitle === link.substring(19, link.length)) {
+                                            //console.log(link.substring(19, link.length) + " : " + page.videoTitle )
+
+                                            if (page.videoTitle === link.substring(19, link.length).toLowerCase()) {
 
 
 
