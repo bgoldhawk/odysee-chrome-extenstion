@@ -11,58 +11,16 @@ document.addEventListener('odyseeVideoElementReady', async (data) => {
     var videoElement = data.detail.element;
     var videoName = data.detail.videoName;
 
-    //checkForVideoAndSetWatchTime(videoElement, videoName);
+    checkForVideoAndSetWatchTime(videoElement, videoName);
 
-    //var apiService = new APIService("http://localhost:5000");
 
-    //apiService.setNewSyncTime(null, "This is a test from extension");
 
-    data = {
-        userId: null,
-        videoTitle: "super test",
-        watchtime: 0
-    };
 
-   /* let response = await fetch("https://http://159.223.36.212/UserVideo/SyncNewTime", {
-        method: "POST",
-        mode: 'cors',
-        headers: {
-            'Accept': 'application/json, application/xml, text/plain, text/html, *.*',
-            "Access-Control-Allow-Origin": "*",
-            'Content-Type': "application/json"
-        },
-        body: data
+    //apiService.setNewSyncTime(null, "This is a test from extension", "4")
 
-    })
-    .then(response => {
-        console.log(response);
-    })
-    .catch(error => console.log(error));*/
+    //apiService.getAllUserWatchedDetails("7c9c2bbb-629a-440e-bd53-bd2f8d7d09bd")
+    //.then(data => console.log(data));
 
-    /*if (response.ok) { // if HTTP-status is 200-299
-        // get the response body (the method explained below)
-        let json = await response.json();
-      } else {
-        alert("HTTP-Error: " + response.status);
-      }*/
-
-    fetch('https://myextension.goldhawk.me/UserVideo/GetAllWatched/65c1bbf4-51f2-4648-9bee-04c84c27b21b', {
-        headers:{
-            "Access-Control-Allow-Origin":"*",
-            'Content-Type': 'application/json',
-            "accept": "*/*"
-        }
-    })
-    .then(response => response.json())
-    .then(data => console.log(data));
-
-    if (response.ok) { // if HTTP-status is 200-299
-        // get the response body (the method explained below)
-        let json = await response.json();
-      } else {
-        alert("HTTP-Error: " + response.status);
-      }
-    
 
 });
 
@@ -74,58 +32,81 @@ window.addEventListener('odyseePageChanged', function (data) {
 
         setTimeout(() => {
 
+
+            chrome.storage.sync.get("odyse_ext_userId", (data) => {
+
+                userId = data.odyse_ext_userId;
+
+                if (userId != "" || userId != undefined) {
+                    var apiService = new APIService("https://myextension.goldhawk.me");
+
+                    apiService.getAllUserWatchedDetails(userId)
+                        .then(data => {
+
+                            if(data.length == 0)
+                            {
+                                return;
+                            }
+
+                            var visibleTitles = document.getElementsByClassName("card");
+
+                            console.log("loaded video titles :" + visibleTitles.length);
+
+                            for (const key in visibleTitles) {
+                                if (Object.hasOwnProperty.call(visibleTitles, key)) {
+                                    const element = visibleTitles[key];
+
+                                    var cardATag = element.querySelector('.card a');
+
+                                    if (cardATag != undefined) {
+
+
+
+                                        var link = cardATag.href;
+
+                                        data.forEach(page => {
+
+                                            if (page.videoTitle === link.substring(19, link.length)) {
+
+
+
+                                                var titleArea = element.querySelector("[class$='tile__header']");
+
+                                                var timeSpan = element.querySelector("[class$='_overlay-properties'] span")
+
+
+
+                                                var watchedPercent = GetPercentageWatch(timeSpan, page.watchTime.toFixed(0));
+
+
+                                                titleArea.innerHTML = '<div style="background-color:#ba6562;width:' + watchedPercent + '%;height:100%;position:absolute;"></div>' + titleArea.innerHTML;
+
+
+                                                var watchedTime = displayTime(page.watchTime.toFixed(0));
+
+                                                if (timeSpan != undefined) {
+                                                    timeSpan.innerHTML = `${watchedTime}/${timeSpan.innerHTML}`;
+                                                }
+
+                                            }
+
+                                        });
+                                    }
+                                }
+                            }
+
+                        });
+                }
+
+            });
+
             chrome.storage.sync.get('watched_urls', (data) => {
 
                 if (data.watched_urls == undefined) {
                     return;
                 }
 
-                var visibleTitles = document.getElementsByClassName("card");
 
-                console.log("loaded video titles :" + visibleTitles.length);
-
-                for (const key in visibleTitles) {
-                    if (Object.hasOwnProperty.call(visibleTitles, key)) {
-                        const element = visibleTitles[key];
-
-                        var cardATag = element.querySelector('.card a');
-
-                        if (cardATag != undefined) {
-
-
-
-                            var link = cardATag.href;
-
-                            data.watched_urls.pages.forEach(page => {
-
-                                if (page.url === link.substring(19, link.length)) {
-
-
-
-                                    var titleArea = element.querySelector("[class$='tile__header']");
-
-                                    var timeSpan = element.querySelector("[class$='_overlay-properties'] span")
-
-
-
-                                    var watchedPercent = GetPercentageWatch(timeSpan, page.time.toFixed(0));
-
-
-                                    titleArea.innerHTML = '<div style="background-color:#ba6562;width:' + watchedPercent + '%;height:100%;position:absolute;"></div>' + titleArea.innerHTML;
-
-
-                                    var watchedTime = displayTime(page.time.toFixed(0));
-
-                                    if (timeSpan != undefined) {
-                                        timeSpan.innerHTML = `${watchedTime}/${timeSpan.innerHTML}`;
-                                    }
-
-                                }
-
-                            });
-                        }
-                    }
-                }
             });
 
         }, 2000);
@@ -171,58 +152,63 @@ function checkForVideoAndSetWatchTime(videoElement, videoName) {
         return;
     }
 
+    chrome.storage.sync.get("odyse_ext_userId", async (data) => {
 
-    chrome.storage.sync.get("watched_urls", (data) => {
+        let userId = data.odyse_ext_userId;
 
-        videoElement.pause();
+        if (userId != '' && userId != undefined) {
 
-        console.log("Getting watch time for " + videoName);
+            videoElement.pause();
+
+            console.log("Getting watch time for " + videoName);
+
+            var apiService = new APIService("https://myextension.goldhawk.me");
+
+            await apiService.getWatchedDetails(userId, videoName)
+                .then(watchedDetails => {
+
+                    if (watchedDetails == undefined) {
+                        console.log("No Data loaded");
+                        return;
+                    }
+
+                    if (watchedDetails != undefined) {
+                        console.log("Retrieveing Existing User Data");
 
 
-        if (data == undefined) {
-            console.log("No Data loaded");
-            return;
+                        var time = watchedDetails.watchTime;
+
+
+                        let video = document.querySelector('video');
+
+                        console.log("retrieved watch time: " + time);
+                    }
+
+                    if (time != undefined) {
+                        console.log("going to: " + time);
+
+
+                        console.log(videoElement.currentTime);
+                        videoElement.currentTime = time;
+
+                    }
+                    else {
+                        console.log("No watch time defined");
+                    }
+                });
+
+            videoElement.play();
         }
 
-        if (data.watched_urls != undefined) {
-            console.log("Retrieveing Existing User Data");
 
-
-            var time;
-
-            data.watched_urls.pages.forEach(page => {
-
-                if (page.url === videoName) {
-                    time = page.time;
-                }
-
-            });
-
-            let video = document.querySelector('video');
-
-            console.log("retrieved watch time: " + time);
-        }
-
-        if (time != undefined) {
-            console.log("going to: " + time);
-
-
-            console.log(videoElement.currentTime);
-            videoElement.currentTime = time;
-
-        }
-        else {
-            console.log("No watch time defined");
-        }
-
-        videoElement.play();
 
         setInterval(function () { storePlayTime(videoElement, videoName) }, 10000);
 
 
+
+
     });
 }
-
 
 
 function storePlayTime() {
@@ -230,53 +216,28 @@ function storePlayTime() {
     let name = window.location.href.substring(19, window.location.href.length);
     let media = document.querySelector('video');
 
+    chrome.storage.sync.get("odyse_ext_userId", (data) => {
 
-    chrome.storage.sync.get('watched_urls', (data) => {
+        userId = data.odyse_ext_userId;
 
-        if (media == undefined || media.currentTime < 30) {
-            return;
+        if (userId == "") {
+            userId = null;
         }
 
-        let time = media.currentTime;
-        let extData;
-        let pageData;
+        var apiService = new APIService("https://myextension.goldhawk.me");
 
-        extData = data.watched_urls;
+        apiService.setNewSyncTime(userId, name, media.currentTime)
+            .then(retrievedUserId => {
 
-        if (extData == undefined) {
-            extData = {
-                pages: Array()
-            };
-        }
+                console.log("Synced Successfully");
 
-        extData.pages.forEach(page => {
-
-            if (page.url === name) {
-                pageData = page;
-            }
-
-        });
-
-        if (pageData == undefined) {
-            console.log("New Page");
-
-            pageData = {
-                url: name
-            }
-
-            extData.pages.push(pageData);
-        }
-
-        pageData.time = media.currentTime;
+                if (userId == "" || userId == undefined) {
+                    console.log("storing new users id: " + retrievedUserId)
+                    chrome.storage.sync.set({ "odyse_ext_userId": retrievedUserId });
+                }
 
 
-        chrome.storage.sync.set({ 'watched_urls': extData }, () => {
-
-            extData.pages.forEach(page => {
-                console.log(`${page.time} - ${page.url}`);
             })
-            console.log("Synced Successfully");
-        });
 
     });
 }
@@ -344,21 +305,67 @@ function displayTime(seconds) {
 class APIService {
     #baseUrl;
     constructor(serverUrl) {
-        this.#baseUrl = serverUrl;
+        this.baseUrl = serverUrl;
     }
 
-    async *setNewSyncTime(userId, movieTitle) {
-        params = {
+    setNewSyncTime(userId, videoTitle, watchTime) {
+
+
+        var data = {
             userId,
-            movieTitle
+            videoTitle,
+            watchTime
         };
 
-        await request(this.baseUrl + "/UserVideo/SyncNewTime", params, "POST")
-            .then((response) => {
+        var requestData = {
+            method: "POST",
+            headers:
+            {
+                "Access-Control-Allow-Origin": "*",
+                'Content-Type': 'application/json',
+                "accept": "*/*"
+            },
+            body: JSON.stringify(data)
+        };
 
-                return response.text();
-            })
 
+
+        return fetch(this.baseUrl + "/UserVideo/SyncNewTime", requestData)
+            .then(response => response.text())
+            .then(data => data.replaceAll('"', ""));
+
+    }
+
+    getAllUserWatchedDetails(userId) {
+
+        var requestData = {
+            headers:
+            {
+                "Access-Control-Allow-Origin": "*",
+                'Content-Type': 'application/json',
+                "accept": "*/*"
+            }
+        };
+
+        return fetch(this.baseUrl + "/UserVideo/GetAllWatched/" + userId, requestData)
+            .then(response => response.json());
+    }
+
+    getWatchedDetails(userId, videoTitle) {
+
+        var requestData = {
+            headers:
+            {
+                "Access-Control-Allow-Origin": "*",
+                'Content-Type': 'application/json',
+                "accept": "*/*"
+            }
+        };
+
+        return fetch(this.baseUrl + "/UserVideo/GetAllWatched/" + userId + "/" + videoTitle, requestData)
+            .then(response => {
+                response.json()
+            });
     }
 
 
