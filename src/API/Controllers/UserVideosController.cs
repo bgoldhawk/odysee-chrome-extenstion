@@ -11,6 +11,7 @@ using System.Linq;
 using MongoDB.Bson;
 using API.Data;
 using API.Data.Services;
+using System.Web;
 
 namespace API.Controllers
 {
@@ -86,10 +87,10 @@ namespace API.Controllers
             if(user == null)
                 return NotFound($"Unable to find user id {userId}");
 
-            var video = user.WatchList.FirstOrDefault(v => v.VideoTitle.ToLower().Equals(videoTitle.ToLower()));
+            var video = user.WatchList.FirstOrDefault(v => v.VideoTitle.ToLower().Equals(HttpUtility.UrlDecode(videoTitle).ToLower()));
 
             if(video == null)
-                return NotFound("$Video not in watch list");
+                return NotFound($"Video not in watch list: {HttpUtility.UrlDecode(videoTitle)}");
 
             return Ok(video);
         }

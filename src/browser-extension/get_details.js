@@ -364,10 +364,10 @@ class APIService {
             }
         };
 
-        return fetch(this.baseUrl + "/UserVideo/GetAllWatched/" + userId + "/" + videoTitle, requestData)
-            .then(response => {
+        return fetch(this.baseUrl + "/UserVideo/GetAllWatched/" + userId + "/" + encodeURIComponent(videoTitle), requestData)
+            .then(response => 
                 response.json()
-            });
+            );
     }
 
 
