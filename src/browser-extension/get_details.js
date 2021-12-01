@@ -28,7 +28,7 @@ window.addEventListener('odyseePageChanged', function (data) {
     console.log('pageChanged event handled');
 
     let odyseePageName = window.location.href.substring(19, window.location.href.length).toLowerCase();
-    if (!odyseePageName.startsWith('@')) {
+    if (!IsVideoPage(odyseePageName)) {
 
         setTimeout(() => {
 
@@ -263,12 +263,22 @@ const odyseeVideoReadyEvent = new CustomEvent('odyseeVideoLoaded');
 
 window.addEventListener('odyseePageChanged', (data) => {
 
-    if (data.detail.pageName.startsWith('@')) {
+    if (IsVideoPage(data.detail.pageName) ) {
         GetVideoElement(data.detail.pageName);
     }
 
     console.log("data from page change " + data.detail.pageName);
 })
+
+function IsVideoPage(pageName)
+{
+    if(pageName == undefined)
+    {
+        return false;
+    }
+
+    return (pageName.startsWith("@") && pageName.indexOf("/") > 0);
+}
 
 function GetVideoElement(videoName) {
     var videoElement = document.querySelector('video');
@@ -352,12 +362,12 @@ class APIService {
         return fetch(this.baseUrl + "/UserVideo/GetAllWatched/" + userId, requestData)
             .then(response => {
                 
-                if(response)
+                if(response.ok)
                 {
-                    Promise.resolve(response.json());
+                    return Promise.resolve(response.json());
                 }
 
-                Promise.resolve(null);
+                return Promise.resolve(null);
                 
             });
     }
@@ -378,10 +388,10 @@ class APIService {
 
 
                 if(response.ok){
-                    Promise.resolve(response.json())
+                    return Promise.resolve(response.json())
                 }
                 
-                Promise.resolve(null);
+                return Promise.resolve(null);
             });
     }
 
