@@ -169,7 +169,7 @@ function checkForVideoAndSetWatchTime(videoElement, videoName) {
             await apiService.getWatchedDetails(userId, videoName)
                 .then(watchedDetails => {
 
-                    if (watchedDetails == undefined) {
+                    if (watchedDetails == null) {
                         console.log("No Data loaded");
                         return;
                     }
@@ -350,7 +350,16 @@ class APIService {
         };
 
         return fetch(this.baseUrl + "/UserVideo/GetAllWatched/" + userId, requestData)
-            .then(response => response.json());
+            .then(response => {
+                
+                if(response)
+                {
+                    Promise.resolve(response.json());
+                }
+
+                Promise.resolve(null);
+                
+            });
     }
 
     getWatchedDetails(userId, videoTitle) {
@@ -365,9 +374,15 @@ class APIService {
         };
 
         return fetch(this.baseUrl + "/UserVideo/GetAllWatched/" + userId + "/" + encodeURIComponent(videoTitle), requestData)
-            .then(response => 
-                response.json()
-            );
+            .then(response => {
+
+
+                if(response.ok){
+                    Promise.resolve(response.json())
+                }
+                
+                Promise.resolve(null);
+            });
     }
 
 
