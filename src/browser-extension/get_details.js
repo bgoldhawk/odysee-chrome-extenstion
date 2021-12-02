@@ -9,9 +9,10 @@ document.addEventListener('odyseeVideoElementReady', async (data) => {
     console.log(data.detail.element);
 
     var videoElement = data.detail.element;
-    var videoName = data.detail.videoName.toLowerCase();
+    var videoName = document.getElementsByClassName("card__title")[0].innerText;
+    var channelName = document.getElementsByClassName("channel-name")[0].innerText.replaceAll("@", "");
 
-    checkForVideoAndSetWatchTime(videoElement, videoName);
+    checkForVideoAndSetWatchTime(videoElement, channelName, videoName);
 
 
 
@@ -43,8 +44,7 @@ window.addEventListener('odyseePageChanged', function (data) {
                     apiService.getAllUserWatchedDetails(userId)
                         .then(data => {
 
-                            if(data.length == 0)
-                            {
+                            if (data.length == 0) {
                                 return;
                             }
 
@@ -56,44 +56,40 @@ window.addEventListener('odyseePageChanged', function (data) {
                                 if (Object.hasOwnProperty.call(visibleTitles, key)) {
                                     const element = visibleTitles[key];
 
-                                    var cardATag = element.querySelector('.card a');
-
-                                    if (cardATag != undefined) {
-
+                                    var channelName = element.getElementsByClassName("channel-name")[0].innerText.toLowerCase().replaceAll("@", "");
+                                    var videoName = element.querySelector(".claim-tile__title span").innerText.toLowerCase();
 
 
-                                        var link = cardATag.href;
+                                    data.forEach(page => {
 
-                                        data.forEach(page => {
+                                        //console.log(link.substring(19, link.length) + " : " + page.videoTitle )
 
-                                            //console.log(link.substring(19, link.length) + " : " + page.videoTitle )
-
-                                            if (page.videoTitle === link.substring(19, link.length).toLowerCase()) {
+                                        if (page.channelName === channelName && page.videoName === videoName) {
 
 
 
-                                                var titleArea = element.querySelector("[class$='tile__header']");
+                                            var titleArea = element.querySelector("[class$='tile__header']");
 
-                                                var timeSpan = element.querySelector("[class$='_overlay-properties'] span")
-
-
-
-                                                var watchedPercent = GetPercentageWatch(timeSpan, page.watchTime.toFixed(0));
+                                            var timeSpan = element.querySelector("[class$='_overlay-properties'] span")
 
 
-                                                titleArea.innerHTML = '<div style="background-color:#ba6562;width:' + watchedPercent + '%;height:100%;position:absolute;"></div>' + titleArea.innerHTML;
+
+                                            var watchedPercent = GetPercentageWatch(timeSpan, page.watchTime.toFixed(0));
 
 
-                                                var watchedTime = displayTime(page.watchTime.toFixed(0));
+                                            titleArea.innerHTML = '<div style="background-color:#ba6562;width:' + watchedPercent + '%;height:100%;position:absolute;"></div>' + titleArea.innerHTML;
 
-                                                if (timeSpan != undefined) {
-                                                    timeSpan.innerHTML = `${watchedTime}/${timeSpan.innerHTML}`;
-                                                }
 
+                                            var watchedTime = displayTime(page.watchTime.toFixed(0));
+
+                                            if (timeSpan != undefined) {
+                                                timeSpan.innerHTML = `${watchedTime}/${timeSpan.innerHTML}`;
                                             }
 
-                                        });
-                                    }
+                                        }
+
+                                    });
+
                                 }
                             }
 
@@ -143,14 +139,14 @@ function GetPercentageWatch(timeSpan, watchedTime) {
 
 }
 
-function checkForVideoAndSetWatchTime(videoElement, videoName) {
+function checkForVideoAndSetWatchTime(videoElement, channelName, videoName) {
 
 
     if (videoElement.readyState < 4) {
 
         console.log("Waiting for video to be ready, current state is " + videoName.readyState);
 
-        setTimeout(() => { checkForVideoAndSetWatchTime(videoElement, videoName) }, 1000);
+        setTimeout(() => { checkForVideoAndSetWatchTime(videoElement, channelName, videoName) }, 1000);
         return;
     }
 
@@ -166,7 +162,10 @@ function checkForVideoAndSetWatchTime(videoElement, videoName) {
 
             var apiService = new APIService("https://myextension.goldhawk.me");
 
-            await apiService.getWatchedDetails(userId, videoName)
+
+            console.log(`${channelName} : ${videoName}`);
+
+            await apiService.getWatchedDetails(userId, channelName, videoName)
                 .then(watchedDetails => {
 
                     if (watchedDetails == null) {
@@ -204,7 +203,7 @@ function checkForVideoAndSetWatchTime(videoElement, videoName) {
 
 
 
-        setInterval(function () { storePlayTime(videoElement, videoName) }, 10000);
+        setInterval(function () { storePlayTime(channelName, videoName) }, 10000);
 
 
 
@@ -212,10 +211,17 @@ function checkForVideoAndSetWatchTime(videoElement, videoName) {
     });
 }
 
+function GetVideoDetails(odyseeName) {
+    return {
+        channelName: odyseeName.substring(1, odyseeName.indexOf(":")),
+        videoName: odyseeName.substring(odyseeName.indexOf("/") + 1, odyseeName.indexOf(":", odyseeName.indexOf("/") + 2)).replaceAll("-", " ")
+    }
+}
 
-function storePlayTime() {
 
-    let name = window.location.href.substring(19, window.location.href.length);
+function storePlayTime(channelName, videoName) {
+
+
     let media = document.querySelector('video');
 
     chrome.storage.sync.get("odyse_ext_userId", (data) => {
@@ -228,7 +234,7 @@ function storePlayTime() {
 
         var apiService = new APIService("https://myextension.goldhawk.me");
 
-        apiService.setNewSyncTime(userId, name, media.currentTime)
+        apiService.setNewSyncTime(userId, channelName, videoName, media.currentTime)
             .then(retrievedUserId => {
 
                 console.log("Synced Successfully");
@@ -263,17 +269,15 @@ const odyseeVideoReadyEvent = new CustomEvent('odyseeVideoLoaded');
 
 window.addEventListener('odyseePageChanged', (data) => {
 
-    if (IsVideoPage(data.detail.pageName) ) {
+    if (IsVideoPage(data.detail.pageName)) {
         GetVideoElement(data.detail.pageName);
     }
 
     console.log("data from page change " + data.detail.pageName);
 })
 
-function IsVideoPage(pageName)
-{
-    if(pageName == undefined)
-    {
+function IsVideoPage(pageName) {
+    if (pageName == undefined) {
         return false;
     }
 
@@ -320,12 +324,13 @@ class APIService {
         this.baseUrl = serverUrl;
     }
 
-    setNewSyncTime(userId, videoTitle, watchTime) {
+    setNewSyncTime(userId, channelName, videoName, watchTime) {
 
 
         var data = {
             userId,
-            videoTitle,
+            channelName,
+            videoName,
             watchTime
         };
 
@@ -361,18 +366,17 @@ class APIService {
 
         return fetch(this.baseUrl + "/UserVideo/GetAllWatched/" + userId, requestData)
             .then(response => {
-                
-                if(response.ok)
-                {
+
+                if (response.ok) {
                     return Promise.resolve(response.json());
                 }
 
                 return Promise.resolve(null);
-                
+
             });
     }
 
-    getWatchedDetails(userId, videoTitle) {
+    getWatchedDetails(userId, channelName, videoName) {
 
         var requestData = {
             headers:
@@ -383,14 +387,14 @@ class APIService {
             }
         };
 
-        return fetch(this.baseUrl + "/UserVideo/GetAllWatched/" + userId + "/" + encodeURIComponent(videoTitle), requestData)
+        return fetch(this.baseUrl + "/UserVideo/GetAllWatched/" + userId + "/" + encodeURIComponent(channelName) + "/" + encodeURIComponent(videoName), requestData)
             .then(response => {
 
 
-                if(response.ok){
+                if (response.ok) {
                     return Promise.resolve(response.json())
                 }
-                
+
                 return Promise.resolve(null);
             });
     }
