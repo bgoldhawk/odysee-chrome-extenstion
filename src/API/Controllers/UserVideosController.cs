@@ -48,12 +48,13 @@ namespace API.Controllers
                     user = new User();
                 }
 
-                var watched_video = user.WatchList.FirstOrDefault(v => v.VideoTitle.ToLower().Equals(syncedVideoViewModel.VideoTitle.ToLower()));
+                var watched_video = user.WatchList.FirstOrDefault(v => v.ChannelName.Equals(syncedVideoViewModel.ChannelName.ToLower().Trim()) && v.VideoName.Equals(syncedVideoViewModel.VideoName.ToLower().Trim()));
 
                 if (watched_video == null)
                 {
                     watched_video = new Videos();
-                    watched_video.VideoTitle = syncedVideoViewModel.VideoTitle.ToLower();
+                    watched_video.ChannelName = syncedVideoViewModel.ChannelName.ToLower().Trim();
+                    watched_video.VideoName = syncedVideoViewModel.VideoName.ToLower().Trim();
                     user.WatchList.Add(watched_video);
                 }
 
@@ -79,18 +80,18 @@ namespace API.Controllers
             return Ok(user.WatchList);
         }
 
-        [HttpGet("GetAllWatched/{userId}/{videoTitle}")]
-        public async Task<IActionResult> GetAllWatchedAsync(Guid userId, string videoTitle)
+        [HttpGet("GetAllWatched/{userId}/{channelName}/{videoName}")]
+        public async Task<IActionResult> GetAllWatchedAsync(Guid userId, string channelName, string videoName)
         {
             var user = await _userService.GetByIdAsync(userId);
 
             if(user == null)
                 return NotFound($"Unable to find user id {userId}");
 
-            var video = user.WatchList.FirstOrDefault(v => v.VideoTitle.ToLower().Equals(HttpUtility.UrlDecode(videoTitle).ToLower()));
+            var video = user.WatchList.FirstOrDefault(v => v.ChannelName.Equals(channelName.ToLower().Trim()) && v.VideoName.Equals(videoName.ToLower().Trim()));
 
             if(video == null)
-                return NotFound($"Video not in watch list: {HttpUtility.UrlDecode(videoTitle)}");
+                return NotFound($"Video not in watch list: {channelName} - {videoName}");
 
             return Ok(video);
         }
