@@ -14,15 +14,6 @@ document.addEventListener('odyseeVideoElementReady', async (data) => {
 
     checkForVideoAndSetWatchTime(videoElement, channelName, videoName);
 
-
-
-
-    //apiService.setNewSyncTime(null, "This is a test from extension", "4")
-
-    //apiService.getAllUserWatchedDetails("7c9c2bbb-629a-440e-bd53-bd2f8d7d09bd")
-    //.then(data => console.log(data));
-
-
 });
 
 window.addEventListener('odyseePageChanged', function (data) {
@@ -56,6 +47,10 @@ window.addEventListener('odyseePageChanged', function (data) {
                                 if (Object.hasOwnProperty.call(visibleTitles, key)) {
                                     const element = visibleTitles[key];
 
+                                    if(!element.getElementsByClassName("channel-name")[0])
+                                    {
+                                        continue;
+                                    }
                                     var channelName = element.getElementsByClassName("channel-name")[0].innerText.toLowerCase().replaceAll("@", "");
                                     var videoName = element.querySelector(".claim-tile__title span").innerText.toLowerCase();
 
@@ -315,89 +310,4 @@ function displayTime(seconds) {
     const minutes = (seconds % 3600) / 60
 
     return [hours, minutes, seconds % 60].map(format).join(':')
-}
-
-
-class APIService {
-    #baseUrl;
-    constructor(serverUrl) {
-        this.baseUrl = serverUrl;
-    }
-
-    setNewSyncTime(userId, channelName, videoName, watchTime) {
-
-
-        var data = {
-            userId,
-            channelName,
-            videoName,
-            watchTime
-        };
-
-        var requestData = {
-            method: "POST",
-            headers:
-            {
-                "Access-Control-Allow-Origin": "*",
-                'Content-Type': 'application/json',
-                "accept": "*/*"
-            },
-            body: JSON.stringify(data)
-        };
-
-
-
-        return fetch(this.baseUrl + "/UserVideo/SyncNewTime", requestData)
-            .then(response => response.text())
-            .then(data => data.replaceAll('"', ""));
-
-    }
-
-    getAllUserWatchedDetails(userId) {
-
-        var requestData = {
-            headers:
-            {
-                "Access-Control-Allow-Origin": "*",
-                'Content-Type': 'application/json',
-                "accept": "*/*"
-            }
-        };
-
-        return fetch(this.baseUrl + "/UserVideo/GetAllWatched/" + userId, requestData)
-            .then(response => {
-
-                if (response.ok) {
-                    return Promise.resolve(response.json());
-                }
-
-                return Promise.resolve(null);
-
-            });
-    }
-
-    getWatchedDetails(userId, channelName, videoName) {
-
-        var requestData = {
-            headers:
-            {
-                "Access-Control-Allow-Origin": "*",
-                'Content-Type': 'application/json',
-                "accept": "*/*"
-            }
-        };
-
-        return fetch(this.baseUrl + "/UserVideo/GetAllWatched/" + userId + "/" + encodeURIComponent(channelName) + "/" + encodeURIComponent(videoName), requestData)
-            .then(response => {
-
-
-                if (response.ok) {
-                    return Promise.resolve(response.json())
-                }
-
-                return Promise.resolve(null);
-            });
-    }
-
-
 }
