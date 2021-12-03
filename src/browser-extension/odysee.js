@@ -16,11 +16,17 @@ document.addEventListener('odyseeVideoElementReady', async (data) => {
 
 });
 
-window.addEventListener('odyseePageChanged', function (data) {
-    console.log('pageChanged event handled');
+window.addEventListener('pageChanged', function (data) {
+    console.log('pageChanged event handled: '+ data);
 
-    let odyseePageName = window.location.href.substring(19, window.location.href.length).toLowerCase();
-    if (!IsVideoPage(odyseePageName)) {
+    if(data.detail.host != "https://odysee.com")
+    {
+
+        return;
+    }
+
+    //let odyseePageName = window.location.href.substring(19, window.location.href.length).toLowerCase();
+    if (!IsVideoPage(data.detail.pageName)) {
 
         setTimeout(() => {
 
@@ -245,24 +251,15 @@ function storePlayTime(channelName, videoName) {
     });
 }
 
-setInterval(() => {
-
-    if (url !== document.location.href || url == undefined) {
-
-        let odyseePageName = window.location.href.substring(19, window.location.href.length);
-
-        window.dispatchEvent(new CustomEvent('odyseePageChanged', { detail: { pageName: odyseePageName } }));
-
-        console.log('odyseePageChanged');
-    }
-
-    url = document.location.href;
-
-}, 1000)
 
 const odyseeVideoReadyEvent = new CustomEvent('odyseeVideoLoaded');
 
-window.addEventListener('odyseePageChanged', (data) => {
+window.addEventListener('pageChanged', (data) => {
+
+    if(data.detail.host != "https://odysee.com")
+    {   
+        return;
+    }
 
     if (IsVideoPage(data.detail.pageName)) {
         GetVideoElement(data.detail.pageName);

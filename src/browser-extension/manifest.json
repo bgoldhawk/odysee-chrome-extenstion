@@ -29,11 +29,13 @@
     "content_scripts": [
         {
             "matches": [
-                "https://odysee.com/*"
+                "https://odysee.com/*",
+                "https://bitchute.com/*"
             ],
             "js": [
+                "customEvents.js",
                 "ApiService.js",
-                "get_details.js"
+                "odysee.js"
             ]
         }
     ]
