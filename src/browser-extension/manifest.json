@@ -30,12 +30,13 @@
         {
             "matches": [
                 "https://odysee.com/*",
-                "https://bitchute.com/*"
+                "https://www.bitchute.com/*"
             ],
             "js": [
                 "customEvents.js",
                 "ApiService.js",
-                "odysee.js"
+                "odysee.js",
+                "bitchute.js"
             ]
         }
     ]
