@@ -33,6 +33,7 @@
                 "https://www.bitchute.com/*"
             ],
             "js": [
+                "extensionShared.js",
                 "customEvents.js",
                 "ApiService.js",
                 "odysee.js",

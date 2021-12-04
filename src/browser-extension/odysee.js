@@ -5,6 +5,11 @@ let url;
 
 document.addEventListener('odyseeVideoElementReady', async (data) => {
 
+    if(window.location.host!= "odysee.com")
+    {
+        return;
+    }
+
     console.log('Video element loaded on ' + data.detail.videoName);
     console.log(data.detail.element);
 
@@ -21,7 +26,6 @@ window.addEventListener('pageChanged', function (data) {
 
     if(data.detail.host != "https://odysee.com")
     {
-
         return;
     }
 
@@ -115,31 +119,6 @@ window.addEventListener('pageChanged', function (data) {
 }, true)
 
 
-function GetPercentageWatch(timeSpan, watchedTime) {
-    if (timeSpan == undefined) {
-        return 100;
-    }
-
-    var timeParts = timeSpan.innerHTML.split(":");
-
-    var totalTimeInSecs;
-
-    if (timeParts.length > 2) {
-        totalTimeInSecs = ((timeParts[0] * 60) * 60) + (timeParts[1] * 60) + (timeParts[2] * 1);
-    }
-    else {
-        totalTimeInSecs = (timeParts[0] * 60) + (timeParts[1] * 1);
-    }
-
-    console.log("Total time in seconds: " + totalTimeInSecs);
-
-    var percent = Math.floor((watchedTime * 1 / totalTimeInSecs) * 100);
-
-    console.log(`percent: ${percent}`);
-    return percent;
-
-}
-
 function checkForVideoAndSetWatchTime(videoElement, channelName, videoName) {
 
 
@@ -171,7 +150,6 @@ function checkForVideoAndSetWatchTime(videoElement, channelName, videoName) {
 
                     if (watchedDetails == null) {
                         console.log("No Data loaded");
-                        return;
                     }
 
                     if (watchedDetails != undefined) {
@@ -217,38 +195,6 @@ function GetVideoDetails(odyseeName) {
         channelName: odyseeName.substring(1, odyseeName.indexOf(":")),
         videoName: odyseeName.substring(odyseeName.indexOf("/") + 1, odyseeName.indexOf(":", odyseeName.indexOf("/") + 2)).replaceAll("-", " ")
     }
-}
-
-
-function storePlayTime(channelName, videoName) {
-
-
-    let media = document.querySelector('video');
-
-    chrome.storage.sync.get("odyse_ext_userId", (data) => {
-
-        userId = data.odyse_ext_userId;
-
-        if (userId == "") {
-            userId = null;
-        }
-
-        var apiService = new APIService("https://myextension.goldhawk.me");
-
-        apiService.setNewSyncTime(userId, channelName, videoName, media.currentTime)
-            .then(retrievedUserId => {
-
-                console.log("Synced Successfully");
-
-                if (userId == "" || userId == undefined) {
-                    console.log("storing new users id: " + retrievedUserId)
-                    chrome.storage.sync.set({ "odyse_ext_userId": retrievedUserId });
-                }
-
-
-            })
-
-    });
 }
 
 
