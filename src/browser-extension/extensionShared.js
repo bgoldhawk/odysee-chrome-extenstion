@@ -3,6 +3,13 @@ function storePlayTime(channelName, videoName) {
 
     let media = document.querySelector('video');
 
+    let watchTime = media.currentTime;
+
+    if(watchTime < 30)
+    {
+        return false;
+    }
+
     chrome.storage.sync.get("odyse_ext_userId", (data) => {
 
         userId = data.odyse_ext_userId;
@@ -13,7 +20,7 @@ function storePlayTime(channelName, videoName) {
 
         var apiService = new APIService("https://myextension.goldhawk.me");
 
-        apiService.setNewSyncTime(userId, channelName, videoName, media.currentTime)
+        apiService.setNewSyncTime(userId, channelName, videoName, watchTime)
             .then(retrievedUserId => {
 
                 console.log("Synced Successfully");
